@@ -1,0 +1,45 @@
+{
+  "name": "mnr-request",
+  "version": "1.0.0",
+  "description": "Opinionated wrapper around request-promise-native",
+  "main": "index.js",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/semistandard --verbose | ./node_modules/.bin/snazzy && ./node_modules/.bin/tape 'test/unit/**/*.test.js' | ./node_modules/.bin/tap-summary",
+    "test:integration": "./node_modules/.bin/tape 'test/integration/**/*.test.js' | ./node_modules/.bin/tap-summary"
+  },
+  "author": {
+    "name": "Alexey Gorokhov",
+    "email": "alexey.gorokhov@icloud.com",
+    "url": ""
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "proxyquire": "^1.7.4",
+    "semistandard": "^12.0.0",
+    "sinon": "^4.3.0",
+    "snazzy": "^7.0.0",
+    "tap-summary": "^4.0.0",
+    "tape": "^4.4.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.5",
+    "request": "^2.83.0",
+    "request-promise-native": "^1.0.5",
+    "stampit": "^4.0.2",
+    "verror": "^1.10.0"
+  },
+  "keywords": [
+    "request"
+  ],
+  "homepage": "https://github.com/AlexeyGorokhov/mnr-request",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlexeyGorokhov/mnr-request"
+  },
+  "bugs": {
+    "url": "https://github.com/AlexeyGorokhov/mnr-request/issues"
+  }
+}
