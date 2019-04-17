@@ -78,7 +78,7 @@ Type: `Integer`
 
 Number of retries. This number does not include the initial request. Optional.Defaults to 2. Retries happen in case of:
   * request fails due to a technical reason;
-  * response status code >= 500 and no custom error is configured for such a status code.
+  * response status code >= 500 and no custom error is configured for such a status code (excluding the case when response status code is 503 and response has application/json body with the `retry` field set to `true`).
 
 
 ### retryTimeoutMs
