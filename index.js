@@ -55,6 +55,7 @@ module.exports = function mnrRequest (config) {
    *     @prop {String} path Relative endpoint path. May or may not start with '/'. Optional.
    *           Defaults to an empty string
    *     @prop {String} method HTTP method name. Optional. Defaults to 'GET'
+   *     @prop {Object} headers Collection of request headers. Optional
    *     @prop {Object} qs Data to be sent in the query string. Optional
    *     @prop {Any} body Any JSON-serializable data to be sent in the request body. Optional
    *
@@ -72,6 +73,7 @@ module.exports = function mnrRequest (config) {
       apiName,
       path,
       method,
+      headers,
       qs,
       body
     } = normalizeReqOpts(opts);
@@ -83,6 +85,7 @@ module.exports = function mnrRequest (config) {
       method,
       ...(qs ? { qs } : {}),
       ...(body ? { body } : {}),
+      headers,
       json: true,
       resolveWithFullResponse: true,
       simple: false,

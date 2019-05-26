@@ -94,6 +94,33 @@ test(`normal PATCH`, async t => {
   }
 });
 
+test('sending user defined headers', async t => {
+  try {
+    const HEADER_NAME = 'Header-Name';
+    const HEADER_VAL = 'Header value';
+    const opts = {
+      apiName: 'httpbin',
+      path: '/headers',
+      method: 'GET',
+      headers: {
+        [HEADER_NAME]: HEADER_VAL
+      }
+    };
+
+    const result = await request(opts);
+
+    t.equal(
+      result.headers[HEADER_NAME],
+      HEADER_VAL,
+      'should send headers'
+    );
+
+    t.end();
+  } catch (err) {
+    t.end(err);
+  }
+});
+
 test(`request fails due to technical reason`, async t => {
   try {
     const opts = {
