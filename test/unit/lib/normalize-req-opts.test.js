@@ -11,6 +11,7 @@ test(`${mn} > called without a param`, t => {
     apiName: '',
     path: '/',
     method: 'GET',
+    headers: null,
     qs: null,
     body: null
   };

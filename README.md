@@ -47,6 +47,9 @@ const responseData = request({
   apiName: 'httpbin',
   path: '/get',
   method: 'GET',
+  headers: {
+    'Authorization': 'Bearer 123foo='
+  },
   qs: {
     foo: 'bar'
   }
@@ -126,6 +129,12 @@ Relative endpoint path. May or may not start with '/'. Optional. Defaults to an 
 Type: `String`
 
 HTTP method name. Optional. Defaults to 'GET'.
+
+#### options.headers
+
+Type: `Object`
+
+Collection of user defined request headers in the format: `<header_name> {Sgtring}: <header_value> {String}`.
 
 #### options.qs
 
