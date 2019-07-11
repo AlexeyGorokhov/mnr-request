@@ -1,29 +1,44 @@
 'use strict';
 
 const test = require('tape');
+const proxyquire = require('proxyquire').noPreserveCache();
 
-const mnrRequest = require('../../index');
+const mnrRequest = proxyquire('../../index', {});
 
-const TIMEOUT_MS = 5000;
-const CUSTOM_ERROR_CODE = 409;
-const CUSTOM_ERROR_NAME = 'ConflictError';
+const TIMEOUT_MS = 3000;
+const GLOBAL_CUSTOM_ERROR_CODE = 409;
+const GLOBAL_CUSTOM_ERROR_NAME = 'ConflictError';
+const API_CUSTOM_ERROR_CODE = 401;
+const API_CUSTOM_ERROR_NAME = 'UnauthorizedError';
+const REQ_CUSTOM_ERROR_CODE = 402;
+const REQ_CUSTOM_ERROR_NAME = 'RequestSpecificError';
 
-const config = {
-  apiNames: new Map([
-    ['httpbin', 'https://httpbin.org'],
-    ['not-existng', 'https://httpbin.notexisting']
-  ]),
+const apiOptions = {
+  customErrors: new Map([
+    [API_CUSTOM_ERROR_CODE, { name: API_CUSTOM_ERROR_NAME, message: 'foo' }]
+  ])
+};
+
+const apis = new Map([
+  ['httpbin', {
+    baseUrl: 'https://httpbin.org',
+    apiOptions
+  }],
+  ['not-existng', { baseUrl: 'https://httpbin.notexisting' }]
+]);
+
+const globalOptions = {
   requestTimeoutMs: TIMEOUT_MS,
   retries: 1,
   retryTimeoutMs: 500,
   customErrors: new Map([
-    [CUSTOM_ERROR_CODE, { name: CUSTOM_ERROR_NAME, message: 'foo' }]
+    [GLOBAL_CUSTOM_ERROR_CODE, { name: GLOBAL_CUSTOM_ERROR_NAME, message: 'foo' }]
   ])
 };
 
 const reqData = { foo: 'bar' };
 
-const request = mnrRequest(config);
+const request = mnrRequest(apis, globalOptions);
 
 test(`normal GET`, async t => {
   try {
@@ -94,6 +109,28 @@ test(`normal PATCH`, async t => {
   }
 });
 
+test(`response without body`, async t => {
+  try {
+    const opts = {
+      apiName: 'httpbin',
+      path: '/status/200',
+      method: 'GET'
+    };
+
+    const result = await request(opts);
+
+    t.deepEqual(
+      result,
+      null,
+      'should succeed with response data set to null'
+    );
+
+    t.end();
+  } catch (err) {
+    t.end(err);
+  }
+});
+
 test('sending user defined headers', async t => {
   try {
     const HEADER_NAME = 'Header-Name';
@@ -144,11 +181,11 @@ test(`request fails due to technical reason`, async t => {
   }
 });
 
-test(`custom errory response status code`, async t => {
+test(`custom errory response status code defined in API settings`, async t => {
   try {
     const opts = {
       apiName: 'httpbin',
-      path: `/status/${CUSTOM_ERROR_CODE}`,
+      path: `/status/${API_CUSTOM_ERROR_CODE}`,
       method: 'GET'
     };
 
@@ -158,8 +195,57 @@ test(`custom errory response status code`, async t => {
   } catch (err) {
     t.equal(
       err.name,
-      CUSTOM_ERROR_NAME,
-      'should reject with custom error'
+      API_CUSTOM_ERROR_NAME,
+      'should reject with API custom error'
+    );
+
+    t.end();
+  }
+});
+
+test(`custom errory response status code defined in request settings`, async t => {
+  try {
+    const opts = {
+      apiName: 'httpbin',
+      path: `/status/${REQ_CUSTOM_ERROR_CODE}`,
+      method: 'GET',
+      requestOptions: {
+        customErrors: new Map([
+          [REQ_CUSTOM_ERROR_CODE, { name: REQ_CUSTOM_ERROR_NAME, message: 'foo' }]
+        ])
+      }
+    };
+
+    await request(opts);
+
+    t.end(new Error('has not expected to succeed'));
+  } catch (err) {
+    t.equal(
+      err.name,
+      REQ_CUSTOM_ERROR_NAME,
+      'should reject with request custom error'
+    );
+
+    t.end();
+  }
+});
+
+test(`custom errory response status code defined in global settings`, async t => {
+  try {
+    const opts = {
+      apiName: 'httpbin',
+      path: `/status/${GLOBAL_CUSTOM_ERROR_CODE}`,
+      method: 'GET'
+    };
+
+    await request(opts);
+
+    t.end(new Error('has not expected to succeed'));
+  } catch (err) {
+    t.equal(
+      err.name,
+      GLOBAL_CUSTOM_ERROR_NAME,
+      'should reject with global custom error'
     );
 
     t.end();
