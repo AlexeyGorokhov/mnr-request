@@ -1,14 +1,24 @@
 # mnr-request
 
-Opinionated wrapper around [request-promise-native](https://www.npmjs.com/package/request-promise-native)
+Opinionated wrapper around [node-fetch](https://www.npmjs.com/package/node-fetch)
 
 
 
 
 ## You may not need it!
 
-This is a custom highly opinionated solution aimed at code reuse for a few private projects. You'd be better off using [request-promise-native](https://www.npmjs.com/package/request-promise-native) or [request-promise](https://www.npmjs.com/package/request-promise) directly.
+This is a custom, highly opinionated solution aimed at code re-use for a few private projects. You'd be better off using [node-fetch](https://www.npmjs.com/package/node-fetch) directly.
 
+
+
+
+## Version 2 Breaking Changes
+
+* This is a complete re-write using [node-fetch](https://www.npmjs.com/package/node-fetch) instead of [request-promise-native](https://www.npmjs.com/package/request-promise-native) under the hood.
+
+* Module initialization API is incompatible with v1. Though, request API is incompatible.
+
+Archive documentation: [v1](https://github.com/AlexeyGorokhov/mnr-request/blob/master/docs_archives/README-v1.md).
 
 
 
@@ -23,27 +33,39 @@ $ npm install mnr-request --save
 
 
 
-## Usage example
+## Usage Examples
 
 ```javascript
 const mnrRequest = require('mnr-request');
 
-const config = {
-  apiNames: new Map([
-    ['httpbin', 'https://httpbin.org'],
-    ['example', 'http://example.com']
-  ]),
-  requestTimeoutMs: 15000,
-  retries: 2,
-  retryTimeoutMs: 2000,
+const apis = new Map([
+  ['httpbin', {
+    baseUrl: 'https://httpbin.org',
+    apiOptions: {
+      requestTimeoutMs: 5000,
+      retries: 5,
+      retryTimeoutMs: 500,
+      customErrors: new Map([
+        [401, { name: 'UnauthorizedError', message: 'request unauthorized' }]
+      ])
+    }
+  }],
+  ['example', { baseUrl: 'http://example.com' }]
+]);
+
+const globalOptions = {
+  requestTimeoutMs: 10000,
+  retries: 1,
+  retryTimeoutMs: 3000,
   customErrors: new Map([
     [409, { name: 'ConflictError', message: 'request resulted in 409 Conflict response' }]
   ])
 };
 
-const request = mnrRequest(config);
 
-const responseData = request({
+const request = mnrRequest(apis, globalOptions);
+
+const responseData1 = request({
   apiName: 'httpbin',
   path: '/get',
   method: 'GET',
@@ -54,129 +76,29 @@ const responseData = request({
     foo: 'bar'
   }
 });
+
+const responseData2 = request({
+  apiName: 'example',
+  path: '/',
+  method: 'PUT',
+  body: {
+    foo: 'bar'
+  },
+  requestOptions: {
+    requestTimeoutMs: 0,
+    retries: 0,
+    retryTimeoutMs: 0,
+    customErrors: new Map([
+      [500, { name: 'CriticalError', message: 'backend is broken' }]
+    ])
+  }
+});
 ```
-
-
-
-
-## Configuration
-
-### apiNames
-
-Type: `Map`
-
-Collection of base URL aliases.
-
-
-### requestTimeoutMs
-
-Type: `Integer`
-
-Timeout in milliseconds after which a single request attempt/retry fails. Optional. Defaults to 10000 ms.
-
-
-### retries
-
-Type: `Integer`
-
-Number of retries. This number does not include the initial request. Optional.Defaults to 2. Retries happen in case of:
-  * request fails due to a technical reason;
-  * response status code >= 500 and no custom error is configured for such a status code (excluding the case when response status code is 503 and response has application/json body with the `retry` field set to `true`).
-
-
-### retryTimeoutMs
-
-Type: `Integer`
-
-Amount of time in milliseconds to wait before next retry. Optional. Defaults to 2000 ms.
-
-
-### customErrors
-
-Type: `Map`
-
-Collection of custom error descriptors the promise has to reject with for defined response status codes. This overrides the default behavior of the module. Optional. Defaults to an empty collection.
-  * @key `{Integer}` Response status code
-  * @value `{Object}`
-    * @prop `{String} name` Error name
-    * @prop `{String} message` Error message
-
 
 
 
 ## API Reference
 
-### request(options)
+`mnrRequest(apis, globalOptions)` - see JSDoc comments in `./index.js` file.
 
-Type: `Function`
-
-Makes an HTTP request.
-
-#### options.apiName
-
-Type: `String`
-
-Alias to base URL.
-
-#### options.path
-
-Type: `String`
-
-Relative endpoint path. May or may not start with '/'. Optional. Defaults to an empty string.
-
-#### options.method
-
-Type: `String`
-
-HTTP method name. Optional. Defaults to 'GET'.
-
-#### options.headers
-
-Type: `Object`
-
-Collection of user defined request headers in the format: `<header_name> {Sgtring}: <header_value> {String}`.
-
-#### options.qs
-
-Type: `Object`
-
-Data to be sent in the query string. Optional.
-
-#### options.body
-
-Type: `Any`
-
-Any JSON-serializable data to be sent in the request body. Optional.
-
-#### Returns
-
-Type: `Promise<Any>`
-
-JSON-parsed response data.
-
-
-#### Throws
-
-The returned promise rejects with:
-
-* A custom error passed configured with `config.customErrors`, or
-* the following [VErrors](https://www.npmjs.com/package/verror):
-
-##### NetworkError
-
-Request failed due to a technical reason, or any of the tries has been aborted by timeout.
-
-* `cause` - original error;
-* `info` - request meta data.
-
-##### ServiceUnavailable
-
-Last try has received response with status code >=500.
-
-* `info` - request meta data.
-
-##### UnexpectedError
-
-Response's status code >= 400 and <500, or something absolutely unexpected happened.
-
-* `info` - request meta data.
+`request(opts)` - see JSDoc comments in `./lib/request.js` file.

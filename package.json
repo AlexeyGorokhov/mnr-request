@@ -1,14 +1,15 @@
 {
   "name": "mnr-request",
   "version": "0.0.0",
-  "description": "Opinionated wrapper around request-promise-native",
+  "description": "Opinionated wrapper around node-fetch",
   "main": "index.js",
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=10.0.0"
   },
   "scripts": {
     "test": "./node_modules/.bin/semistandard --verbose | ./node_modules/.bin/snazzy && ./node_modules/.bin/tape 'test/unit/**/*.test.js' | ./node_modules/.bin/tap-summary",
-    "test:integration": "./node_modules/.bin/tape 'test/integration/**/*.test.js' | ./node_modules/.bin/tap-summary"
+    "test:integration": "./node_modules/.bin/tape 'test/integration/**/*.test.js' | ./node_modules/.bin/tap-summary",
+    "test:dev": "tape 'test/unit/**/*.test.js' | tap-summary"
   },
   "author": {
     "name": "Alexey Gorokhov",
@@ -26,13 +27,14 @@
   },
   "dependencies": {
     "lodash": "^4.17.5",
-    "request": "^2.83.0",
-    "request-promise-native": "^1.0.5",
+    "node-fetch": "^2.6.0",
+    "qs": "^6.7.0",
     "stampit": "^4.0.2",
     "verror": "^1.10.0"
   },
   "keywords": [
-    "request"
+    "request",
+    "node-fetch"
   ],
   "homepage": "https://github.com/AlexeyGorokhov/mnr-request",
   "repository": {

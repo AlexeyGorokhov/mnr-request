@@ -1,30 +1,48 @@
 'use strict';
 
-const normalizeConfig = require('./lib/normalize-config');
-const getApiUrl = require('./lib/get-api-url');
-const normalizeReqOpts = require('./lib/normalize-req-opts');
-const RequestWorker = require('./lib/request-worker');
+const { initRequestWorker } = require('./lib/request-worker');
+const request = require('./lib/request');
 
 /**
- * Module configuration
+ * Factory function creating singleton instance of configured request function
  *
- * @param {Object} config Configuration object
- *     @prop {Map} apiNames Collection of aliases to base URLs
- *         @key {String} alias
- *         @value {String} base URL
- *     @prop {Integer} requestTimeoutMs Timeout in milliseconds after which a single request
- *           attempt/retry fails. Optional. Defaults to 10000 ms
- *     @prop {Integer} retries Number of retries. This number does not include the initial request.
- *           Optional.Defaults to 2. Retries happen in case of:
+ * @param {Map<String, Object>} apis Collection of APIs. Item's key represents API alias.
+ *     @key {String} API alias
+ *     @value {Object}
+ *         @prop {String} baseUrl Base URL
+ *         @prop {Object?} apiOptions Options applicable to requests to this API. Optional.
+ *             If not provided, global options are used. Both API options and global options
+ *             might be overriden by options of a particular request
+ *             @prop {Integer?} requestTimeoutMs Timeout in milliseconds after which a single
+ *                 request attempt/retry fails. 0 disables the setting (OS limit applies). Optional
+ *             @prop {Integer?} retries Number of retries. This number does not include
+ *                 the initial request. Optional. For reasons of retries see globalOptions.reties
+ *                 description
+ *             @prop {Integer?} retryTimeoutMs Amount of time in milliseconds to wait before
+ *                 next retry. Optional.
+ *             @prop {Map<Integer, Object>?} customErrors Collection of custom error descriptors
+ *                 the promise has to reject with for defined response status codes. Optional.
+ *                     @key {Integer} Response status code
+ *                     @value {Object}
+ *                         @prop {String} name Error name
+ *                         @prop {String} message Error message
+ *
+ * @param {Object?} globalOptions Options applicable to all requests if not explicitly
+ *     overriden by options of a particular API or options of a particular request. Optional.
+ *     If not provided, default options (as described below) are applied
+ *     @prop {Integer?} requestTimeoutMs Timeout in milliseconds after which a single request
+ *         attempt/retry fails. 0 disables the setting (OS limit applies).
+ *         Optional. Defaults to 10_000 ms
+ *     @prop {Integer?} retries Number of retries. This number does not include the initial request.
+ *         Optional.Defaults to 2. Retries happen in case of:
  *             • request fails due to a technical reason;
  *             • response status code >= 500 and no custom error is configured for such a status
  *               code.
- *     @prop {Integer} retryTimeoutMs Amount of time in milliseconds to wait before next retry.
- *           Optional. Defaults to 2000 ms.
- *     @prop {Map} customErrors Collection of custom error descriptors the promise has
- *           to reject with for defined response status codes.
- *           This overrides the default behavior of the module.
- *           Optional. Defaults to an empty collection.
+ *     @prop {Integer?} retryTimeoutMs Amount of time in milliseconds to wait before next retry.
+ *         Optional. Defaults to 2000 ms.
+ *     @prop {Map<Integer, Object>?} customErrors Collection of custom error descriptors the promise has
+ *         to reject with for defined response status codes. This overrides the default
+ *         behavior of the module. Optional. Defaults to an empty collection.
  *         @key {Integer} Response status code
  *         @value {Object}
  *             @prop {String} name Error name
@@ -32,68 +50,7 @@ const RequestWorker = require('./lib/request-worker');
  *
  * @return {Function}
  */
-module.exports = function mnrRequest (config) {
-  const {
-    apiNames,
-    requestTimeoutMs,
-    retries,
-    retryTimeoutMs,
-    customErrors
-  } = normalizeConfig(config);
-
-  const Worker = RequestWorker.methods({
-    retries,
-    retryTimeoutMs,
-    customErrors
-  });
-
-  /**
-   * Make request
-   *
-   * @param {Object} opts
-   *     @prop {String} apiName Alias to base URL
-   *     @prop {String} path Relative endpoint path. May or may not start with '/'. Optional.
-   *           Defaults to an empty string
-   *     @prop {String} method HTTP method name. Optional. Defaults to 'GET'
-   *     @prop {Object} headers Collection of request headers. Optional
-   *     @prop {Object} qs Data to be sent in the query string. Optional
-   *     @prop {Any} body Any JSON-serializable data to be sent in the request body. Optional
-   *
-   * @return {Promise<Any>} JSON-parsed response data
-   *
-   * @throws by default
-   *     @name NetworkError Request failed due to a technical reason, or any of the tries has been
-   *           aborted by timeout
-   *     @name ServiceUnavailable Last try has received >=500
-   *     @name UnexpectedError (1) Response's status code >= 400 and <500;
-   *                           (2) Something absolutely unexpected happened.
-   */
-  return function request (opts) {
-    const {
-      apiName,
-      path,
-      method,
-      headers,
-      qs,
-      body
-    } = normalizeReqOpts(opts);
-
-    const baseUrl = getApiUrl(apiNames, apiName);
-
-    const requestOptions = {
-      uri: baseUrl + path,
-      method,
-      ...(qs ? { qs } : {}),
-      ...(body ? { body } : {}),
-      headers,
-      json: true,
-      resolveWithFullResponse: true,
-      simple: false,
-      timeout: requestTimeoutMs
-    };
-
-    return new Promise((resolve, reject) => {
-      Worker({ requestOptions, resolve, reject }).send();
-    });
-  };
+module.exports = function mnrRequest (apis, globalOptions) {
+  initRequestWorker(apis, globalOptions);
+  return request;
 };
