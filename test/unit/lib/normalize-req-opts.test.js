@@ -11,6 +11,9 @@ const getSelf = (stubs = {}) => {
   } = stubs;
 
   return proxyquire('../../../lib/normalize-req-opts', {
+    './normalize-qs-array-format': {
+      normalizeQsArrayFormat: val => val
+    },
     './normalize-custom-options': normalizeCustomOptionsStub
   });
 };
