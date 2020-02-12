@@ -63,6 +63,167 @@ test(`normal GET`, async t => {
   }
 });
 
+test(`GET with a param as array witn no passed qsArrayFormat option`, async t => {
+  const reqData = { baz: ['a', 'b'] };
+  const expected = 'baz[0]=a&baz[1]=b';
+
+  try {
+    const opts = {
+      apiName: 'httpbin',
+      path: '/get',
+      method: 'GET',
+      qs: reqData
+    };
+
+    const result = await request(opts);
+
+    t.equal(
+      result.url.split('?')[1],
+      expected,
+      'should send query params in expected format'
+    );
+
+    t.end();
+  } catch (err) {
+    t.end(err);
+  }
+});
+
+test(`GET with a param as array and qsArrayFormat option set to invalid value`, async t => {
+  const reqData = { baz: ['a', 'b'] };
+  const expected = 'baz[0]=a&baz[1]=b';
+
+  try {
+    const opts = {
+      apiName: 'httpbin',
+      path: '/get',
+      method: 'GET',
+      qs: reqData,
+      qsArrayFormat: 'an_invalid_value'
+    };
+
+    const result = await request(opts);
+
+    t.equal(
+      result.url.split('?')[1],
+      expected,
+      'should send query params in expected format'
+    );
+
+    t.end();
+  } catch (err) {
+    t.end(err);
+  }
+});
+
+test(`GET with a param as array and qsArrayFormat option set to indices`, async t => {
+  const reqData = { baz: ['a', 'b'] };
+  const expected = 'baz[0]=a&baz[1]=b';
+
+  try {
+    const opts = {
+      apiName: 'httpbin',
+      path: '/get',
+      method: 'GET',
+      qs: reqData,
+      qsArrayFormat: 'indices'
+    };
+
+    const result = await request(opts);
+
+    t.equal(
+      result.url.split('?')[1],
+      expected,
+      'should send query params in expected format'
+    );
+
+    t.end();
+  } catch (err) {
+    t.end(err);
+  }
+});
+
+test(`GET with a param as array and qsArrayFormat option set to brackets`, async t => {
+  const reqData = { baz: ['a', 'b'] };
+  const expected = 'baz[]=a&baz[]=b';
+
+  try {
+    const opts = {
+      apiName: 'httpbin',
+      path: '/get',
+      method: 'GET',
+      qs: reqData,
+      qsArrayFormat: 'brackets'
+    };
+
+    const result = await request(opts);
+
+    t.equal(
+      result.url.split('?')[1],
+      expected,
+      'should send query params in expected format'
+    );
+
+    t.end();
+  } catch (err) {
+    t.end(err);
+  }
+});
+
+test(`GET with a param as array and qsArrayFormat option set to repeat`, async t => {
+  const reqData = { baz: ['a', 'b'] };
+  const expected = 'baz=a&baz=b';
+
+  try {
+    const opts = {
+      apiName: 'httpbin',
+      path: '/get',
+      method: 'GET',
+      qs: reqData,
+      qsArrayFormat: 'repeat'
+    };
+
+    const result = await request(opts);
+
+    t.equal(
+      result.url.split('?')[1],
+      expected,
+      'should send query params in expected format'
+    );
+
+    t.end();
+  } catch (err) {
+    t.end(err);
+  }
+});
+
+test(`GET with a param as array and qsArrayFormat option set to comma`, async t => {
+  const reqData = { baz: ['a', 'b'] };
+  const expected = 'baz=a%2Cb';
+
+  try {
+    const opts = {
+      apiName: 'httpbin',
+      path: '/get',
+      method: 'GET',
+      qs: reqData,
+      qsArrayFormat: 'comma'
+    };
+
+    const result = await request(opts);
+
+    t.equal(
+      decodeURI(result.url.split('?')[1]),
+      expected,
+      'should send query params in expected format'
+    );
+
+    t.end();
+  } catch (err) {
+    t.end(err);
+  }
+});
+
 test(`normal POST`, async t => {
   try {
     const opts = {
